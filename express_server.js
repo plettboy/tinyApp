@@ -6,15 +6,6 @@ const PORT = 8080; // default port 8080
 app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 
-const generateRandomString = function() {
-  let result = "";
-  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-  for (let i = 6; i > 0; i++) {
-    const random = chars.charAt(Math.floor(Math.random() * 62));
-    result += random;
-  }
-  return result;
-}
 
 const urlDatabase = {
   'b2xVn2': 'http://www.lighthouselabs.ca',
@@ -43,11 +34,6 @@ app.post('/urls', (req, res) => {
   if (!longURL) {
     return res.status(400).send('Enter a valid request.');
   }
-
-  const id = generateRandomString();
-  urlDatabase[id] = longURL;
-  console.log(urlDatabase);
-  res.redirect(`/urls/${id}`);
 });
 
 app.post('/urls/:id/update', (req, res) => {
