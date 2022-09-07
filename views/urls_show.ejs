@@ -21,7 +21,14 @@
           </a>
         </p>
       </div>
-      <div class="card-footer text-muted"></div>
+      <div class="card-footer text-muted">
+        <h5 class="card-title">Edit</h5>
+        <form method="POST" action="/urls/<%= id %>/update">
+          <label for="longURL">Enter a URL:</label>
+          <input type="text" name="longURL" />
+          <input class="btn btn-primary" type="submit" value="Submit">
+        </form>
+      </div>
     </div>
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
