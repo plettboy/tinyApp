@@ -8,6 +8,24 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser())
 app.set('view engine', 'ejs');
 
+const getUserFromCookie = (cookie) => {
+  for (const user in users) {
+    if (user === cookie) {
+      return users[user]
+    }
+  }
+  return null;
+}
+
+const getUserFromEmail = (email) => {
+  for (const user in users) {
+    if (users[user].email === email) {
+      return users[user]
+    }
+  }
+  return null;
+}
+
 //this generates a random string id
 const generateRandomString = function() {
   let result = '';
@@ -25,6 +43,20 @@ const urlDatabase = {
   '9sm5xk': 'http://www.google.com'
 };
 
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
+
 //this is simply the example page
 app.get('/', (req, res) => {
   res.send('Hello!');
@@ -37,9 +69,37 @@ app.get('/u/:id', (req, res) => {
 
 //whenever we see app.get and then a render request we are asking html to render the html webpage.
 app.get('/urls', (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] }; //to get the username to show up we added the username cookie as a paramter.
+  const templateVars = { urls: urlDatabase, user:getUserFromCookie(req.cookies["user_id"]) }; //to get the username to show up we added the username cookie as a paramter.
   res.render('urls_index', templateVars);
 });
+
+app.get('/login', (req, res) => {
+  const templateVars = {user: null}
+  res.render("login", templateVars)
+});
+
+app.post('/login', (req, res) => {
+const email = req.body.email;
+const password = req.body.password;
+
+//error handling, if user and pass are zero return error
+if (email.length === 0 && password.length === 0) {
+  return res.status(400).send(`400 error - Missing E-mail or Password`);
+}
+//if emailmatch is true, then error
+const user = getUserFromEmail(email)
+
+if (user) {
+  res.cookie("user_id", user.id)
+  res.redirect(`/urls`);
+
+} else {
+  res.redirect('/login')
+
+}
+
+
+})
 
 //this is meant for entering 
 app.post('/urls', (req, res) => {
@@ -69,8 +129,14 @@ app.post('/urls/:id/delete', (req, res) => {
 });
 
 app.get('/urls/new', (req, res) => {
-  const templateVars = { username: req.cookies["username"] };
+  const templateVars = { user:getUserFromCookie(req.cookies["user_id"]) };
   res.render('urls_new', templateVars);
+});
+
+//this is a get request for a new register page, user name is null and we wender the file register
+app.get('/register', (req, res) => {
+  const templateVars = { user:getUserFromCookie(null) };
+  res.render('register', templateVars);
 });
 
 app.get('/urls/:id', (req, res) => {
@@ -81,7 +147,7 @@ app.get('/urls/:id', (req, res) => {
     return res.status(400).send("URL doesn't exist!");
   }
 
-  const templateVars = { id, longURL, username: req.cookies["username"] };
+  const templateVars = { id, longURL, user:getUserFromCookie(req.cookies["user_id"]) };
   res.render('urls_show', templateVars);
 });
 
@@ -94,15 +160,57 @@ app.get('/hello', (req, res) => {
 });
 
 //requests the username, and assigns it to a cookie
-app.post('/login', (req, res) => {
-  res.cookie("username", req.body.username)
-  res.redirect(`/urls`);
-})
+// app.post('/login', (req, res) => {
+//   const email = req.body.username;
+//   //uses a loop function to get the email from the id
+//   //stores it in a cookie
+//   res.cookie("user_id", getUserFromEmail(email).id)  
+//   res.redirect(`/urls`);
+// })
 
 //clears the username cookie from memory
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
+});
+
+
+//function designed for register/post to match emails to db
+emailMatch = (candUser) => {
+  if (getUserFromEmail(candUser) === null) {
+    return false
+  }
+  return true
+}
+
+
+
+// this connects the forms in register.ejs to our server
+app.post('/register', (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  //error handling, if user and pass are zero return error
+  if (email.length === 0 && password.length === 0) {
+    return res.status(400).send(`400 error - Missing E-mail or Password`);
+  }
+//if emailmatch is true, then error
+  if (emailMatch(email)) {
+    return res.status(400).send(`400 error - A new email is required.`);
+
+  }
+//generate random id for the new user
+  const id = generateRandomString()
+
+  const user = { email, password, id }
+
+  users[id] = user;
+  res.cookie("user_id", id)
+  res.redirect(`/urls`);
+
+
+
+
 });
 
 app.listen(PORT, () => {
