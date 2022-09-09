@@ -8,10 +8,8 @@ const getUserFromCookie = (cookie, users) => {
   return null;
 }
 
-
-
 //takes in the email and outputs the id attached to the email
-const getUserFromEmail = (email, database) => {
+const findUserByEmail = (email, database) => {
   for (const user in database) {
     if (database[user].email === email) {
       return database[user]
@@ -44,13 +42,10 @@ return result
 
 //function designed for register/post to match emails to db
 const emailMatch = (candUser) => {
-  if (getUserFromEmail(candUser) === null) {
+  if (findUserByEmail(candUser) === null) {
     return false
   }
   return true
 }
 
-
-
-
-module.exports = { generateRandomString, getUserFromEmail, getUserFromCookie, getURLSofUser, emailMatch }
+module.exports = { generateRandomString, findUserByEmail, getUserFromCookie, getURLSofUser, emailMatch }
