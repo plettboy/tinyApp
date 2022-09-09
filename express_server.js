@@ -1,12 +1,15 @@
 const express = require('express');
-var cookieParser = require('cookie-parser')
+const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080; // default port 8080
 
 
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser())
+app.use(cookieSession({
+  name: 'session',
+  keys: ['secretkey'],
+}))
 app.set('view engine', 'ejs');
 
 //outputs the user object
@@ -108,7 +111,7 @@ return result
 
 //whenever we see app.get and then a render request we are asking html to render the html webpage.
 app.get('/urls', (req, res) => {
-  const userID = (req.cookies["user_id"])
+  const userID = (req.session["user_id"])
   const user = getUserFromCookie(userID)
 const myURLS = getURLSofUser(userID)
 
@@ -122,7 +125,7 @@ res.render('urls_index', templateVars);
 });
 
 app.get('/login', (req, res) => {
-  if (req.cookies['user_id']) {
+  if (req.session['user_id']) {
     res.redirect(`/urls`);
   } 
 
@@ -142,12 +145,16 @@ if (email.length === 0 && password.length === 0) {
 }
 //if emailmatch is true, then error
 const user = getUserFromEmail(email)
+if (!user) {
+  return res.status(400).send(`400 error - No user found!`);
+}
 if (!bcrypt.compareSync(password, user.password)) {
   return res.status(400).send(`400 error - Incorrect email or password!`);
 }
 
 if (user) {
-  res.cookie("user_id", user.id)
+
+  req.session.user_id = user.id
   res.redirect(`/urls`);
 
 } else {
@@ -168,7 +175,7 @@ app.post('/urls', (req, res) => {
     return res.status(400).send('Enter valid url!'); 
   }
 
-  const user = getUserFromCookie(req.cookies["user_id"])
+  const user = getUserFromCookie(req.session["user_id"])
   if(!user) {
     return res.status(400).send('NO! You are not logged in!'); 
   }
@@ -176,7 +183,7 @@ app.post('/urls', (req, res) => {
   const id = generateRandomString();
   urlDatabase[id] = {
     longURL,
-    userID: req.cookies["user_id"]
+    userID: req.session["user_id"]
   }
   console.log(urlDatabase);
   res.redirect(`/urls/${id}`);
@@ -198,7 +205,7 @@ app.post('/urls/:id/delete', (req, res) => {
   //   return res.status(403).send(`You are not logged in.`);
   // }
   // if user doesn't own url
-  if (urlDatabase[req.params.id].userID !== req.cookies.user_id) {
+  if (urlDatabase[req.params.id].userID !== req.session.user_id) {
     return res.status(403).send(`You don't own that URL.`);
   }
 
@@ -209,7 +216,7 @@ app.post('/urls/:id/delete', (req, res) => {
 });
 
 app.get('/urls/new', (req, res) => {
-const user = getUserFromCookie(req.cookies["user_id"])
+const user = getUserFromCookie(req.session["user_id"])
   if(!user) {
     res.redirect('/login')
   }
@@ -225,7 +232,7 @@ app.get('/register', (req, res) => {
 });
 
 app.get('/urls/:id', (req, res) => {
-  if (!req.cookies['user_id']) {
+  if (!req.session['user_id']) {
     return res.status(403).send(`You are not logged in!`)
   } 
 
@@ -235,7 +242,7 @@ app.get('/urls/:id', (req, res) => {
     return res.status(403).send(`ID not present in database!`)
   }
 
-  let urlsOfUser = getURLSofUser(req.cookies['user_id'])
+  let urlsOfUser = getURLSofUser(req.session['user_id'])
   if (!urlsOfUser[id]) {
     return res.status(403).send(`You do not own this ID!`)
   }
@@ -247,7 +254,7 @@ app.get('/urls/:id', (req, res) => {
   }
 
 
-  const templateVars = { id, longURL, user:getUserFromCookie(req.cookies["user_id"]) };
+  const templateVars = { id, longURL, user:getUserFromCookie(req.session["user_id"]) };
   res.render('urls_show', templateVars);
 });
 
@@ -270,7 +277,8 @@ app.get('/hello', (req, res) => {
 
 //clears the username cookie from memory
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  // res.clearCookie("user_id") 
+req.session = null;
   res.redirect("/urls");
 });
 
@@ -312,7 +320,7 @@ app.post('/register', (req, res) => {
 
 
   users[id] = user;
-  res.cookie("user_id", id)
+  req.session.user_id = id;
   res.redirect(`/urls`);
 
 
