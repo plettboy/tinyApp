@@ -107,7 +107,6 @@ return result
 
 //whenever we see app.get and then a render request we are asking html to render the html webpage.
 app.get('/urls', (req, res) => {
-  
   const userID = (req.cookies["user_id"])
   const user = getUserFromCookie(userID)
 const myURLS = getURLSofUser(userID)
@@ -181,6 +180,20 @@ app.post('/urls/:id/update', (req, res) => {
 
 //this is a post and not a delete because it does not take us to new page, it posts and deletes the thing
 app.post('/urls/:id/delete', (req, res) => {
+//if the user tries to delete a id that doesn't exist
+  // if (!urlDatabase[req.params.id]) {
+  //   return res.status(403).send(`That URL doesn't exist.\n`);
+  // }
+  // // if user isn't logged in
+  // if (!req.cookies.user_id) {
+  //   return res.status(403).send(`You are not logged in.`);
+  // }
+  // if user doesn't own url
+  if (urlDatabase[req.params.id].userID !== req.cookies.user_id) {
+    return res.status(403).send(`You don't own that URL.`);
+  }
+
+
   delete urlDatabase[req.params.id];
   //once you delete, redirect to the url page
   res.redirect(`/urls`);
@@ -203,12 +216,27 @@ app.get('/register', (req, res) => {
 });
 
 app.get('/urls/:id', (req, res) => {
+  if (!req.cookies['user_id']) {
+    return res.status(403).send(`You are not logged in!`)
+  } 
+
+
   const id = req.params.id;
+  if (!urlDatabase[id]) {
+    return res.status(403).send(`ID not present in database!`)
+  }
+
+  let urlsOfUser = getURLSofUser(req.cookies['user_id'])
+  if (!urlsOfUser[id]) {
+    return res.status(403).send(`You do not own this ID!`)
+  }
+
   const longURL = urlDatabase[id].longURL;
 
   if (!longURL) {
     return res.status(400).send("URL doesn't exist!");
   }
+
 
   const templateVars = { id, longURL, user:getUserFromCookie(req.cookies["user_id"]) };
   res.render('urls_show', templateVars);
