@@ -5,6 +5,8 @@ const app = express();
 const PORT = 8080; // default port 8080
 
 
+const {generateRandomString, getUserFromEmail, getUserFromCookie, getURLSofUser, emailMatch} = require("./helpers.js")
+console.log(getUserFromEmail())
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
@@ -12,44 +14,7 @@ app.use(cookieSession({
 }))
 app.set('view engine', 'ejs');
 
-//outputs the user object
-const getUserFromCookie = (cookie) => {
-  for (const user in users) {
-    if (user === cookie) {
-      return users[user]
-    }
-  }
-  return null;
-}
 
-
-const getUserFromEmail = (email) => {
-  for (const user in users) {
-    if (users[user].email === email) {
-      return users[user]
-    }
-  }
-  return null;
-}
-
-//this generates a random string id
-const generateRandomString = function() {
-  let result = '';
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
-  for (let i = 6; i > 0; i--) {
-    const randChar = chars.charAt(Math.floor(Math.random() * chars.length));
-    result += randChar;
-  }
-  return result;
-}
-
-
-
-// //our database for urls to start
-// const urlDatabase = {
-//   'b2xVn2': 'http://www.lighthouselabs.ca',
-//   '9sm5xk': 'http://www.google.com'
-// };
 
 //our updated database
 const urlDatabase = {
@@ -98,22 +63,13 @@ app.get('/u/:id', (req, res) => {
   res.redirect(longURL);
 })
 
-//this is a function to grab the specific urls associated with the passed in ID
-const getURLSofUser = (userID) => {
-  const result = {};
-  for (let shortIds in urlDatabase) {
-    if (urlDatabase[shortIds].userID === userID) {
-      result[shortIds] = urlDatabase[shortIds]
-    }
-  }
-return result
-}
+
 
 //whenever we see app.get and then a render request we are asking html to render the html webpage.
 app.get('/urls', (req, res) => {
   const userID = (req.session["user_id"])
-  const user = getUserFromCookie(userID)
-const myURLS = getURLSofUser(userID)
+  const user = getUserFromCookie(userID, users)
+const myURLS = getURLSofUser(userID, urlDatabase)
 
 
 const templateVars = { urls: myURLS, user }; //to get the username to show up we added the username cookie as a paramter.
@@ -144,7 +100,7 @@ if (email.length === 0 && password.length === 0) {
   return res.status(400).send(`400 error - Missing E-mail or Password`);
 }
 //if emailmatch is true, then error
-const user = getUserFromEmail(email)
+const user = getUserFromEmail(email, users)
 if (!user) {
   return res.status(400).send(`400 error - No user found!`);
 }
@@ -175,7 +131,7 @@ app.post('/urls', (req, res) => {
     return res.status(400).send('Enter valid url!'); 
   }
 
-  const user = getUserFromCookie(req.session["user_id"])
+  const user = getUserFromCookie(req.session["user_id"], users)
   if(!user) {
     return res.status(400).send('NO! You are not logged in!'); 
   }
@@ -196,14 +152,7 @@ app.post('/urls/:id', (req, res) => {
 
 //this is a post and not a delete because it does not take us to new page, it posts and deletes the thing
 app.post('/urls/:id/delete', (req, res) => {
-//if the user tries to delete a id that doesn't exist
-  // if (!urlDatabase[req.params.id]) {
-  //   return res.status(403).send(`That URL doesn't exist.\n`);
-  // }
-  // // if user isn't logged in
-  // if (!req.cookies.user_id) {
-  //   return res.status(403).send(`You are not logged in.`);
-  // }
+
   // if user doesn't own url
   if (urlDatabase[req.params.id].userID !== req.session.user_id) {
     return res.status(403).send(`You don't own that URL.`);
@@ -216,7 +165,7 @@ app.post('/urls/:id/delete', (req, res) => {
 });
 
 app.get('/urls/new', (req, res) => {
-const user = getUserFromCookie(req.session["user_id"])
+const user = getUserFromCookie(req.session["user_id"], users)
   if(!user) {
     res.redirect('/login')
   }
@@ -227,7 +176,7 @@ const user = getUserFromCookie(req.session["user_id"])
 
 //this is a get request for a new register page, user name is null and we wender the file register
 app.get('/register', (req, res) => {
-  const templateVars = { user:getUserFromCookie(null) };
+  const templateVars = { user:getUserFromCookie(null, users) };
   res.render('register', templateVars);
 });
 
@@ -242,7 +191,7 @@ app.get('/urls/:id', (req, res) => {
     return res.status(403).send(`ID not present in database!`)
   }
 
-  let urlsOfUser = getURLSofUser(req.session['user_id'])
+  let urlsOfUser = getURLSofUser(req.session['user_id'], urlDatabase)
   if (!urlsOfUser[id]) {
     return res.status(403).send(`You do not own this ID!`)
   }
@@ -254,7 +203,7 @@ app.get('/urls/:id', (req, res) => {
   }
 
 
-  const templateVars = { id, longURL, user:getUserFromCookie(req.session["user_id"]) };
+  const templateVars = { id, longURL, user:getUserFromCookie(req.session["user_id"], users) };
   res.render('urls_show', templateVars);
 });
 
@@ -266,14 +215,7 @@ app.get('/hello', (req, res) => {
   res.send('<html><body>Hello!<b>World</b></body></html>\n');
 });
 
-//requests the username, and assigns it to a cookie
-// app.post('/login', (req, res) => {
-//   const email = req.body.username;
-//   //uses a loop function to get the email from the id
-//   //stores it in a cookie
-//   res.cookie("user_id", getUserFromEmail(email).id)  
-//   res.redirect(`/urls`);
-// })
+
 
 //clears the username cookie from memory
 app.post("/logout", (req, res) => {
@@ -281,15 +223,6 @@ app.post("/logout", (req, res) => {
 req.session = null;
   res.redirect("/urls");
 });
-
-
-//function designed for register/post to match emails to db
-emailMatch = (candUser) => {
-  if (getUserFromEmail(candUser) === null) {
-    return false
-  }
-  return true
-}
 
 
 
