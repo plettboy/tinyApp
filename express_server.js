@@ -1,5 +1,6 @@
 const express = require('express');
 var cookieParser = require('cookie-parser')
+const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -114,13 +115,16 @@ const myURLS = getURLSofUser(userID)
 
 const templateVars = { urls: myURLS, user }; //to get the username to show up we added the username cookie as a paramter.
 
-if(!user) {
+if(!userID) {
   return res.send("You need to login!")
 }
 res.render('urls_index', templateVars);
 });
 
 app.get('/login', (req, res) => {
+  if (req.cookies['user_id']) {
+    res.redirect(`/urls`);
+  } 
 
   const templateVars = {user: null}
   res.render("login", templateVars)
@@ -130,12 +134,17 @@ app.post('/login', (req, res) => {
 const email = req.body.email;
 const password = req.body.password;
 
+
+
 //error handling, if user and pass are zero return error
 if (email.length === 0 && password.length === 0) {
   return res.status(400).send(`400 error - Missing E-mail or Password`);
 }
 //if emailmatch is true, then error
 const user = getUserFromEmail(email)
+if (!bcrypt.compareSync(password, user.password)) {
+  return res.status(400).send(`400 error - Incorrect email or password!`);
+}
 
 if (user) {
   res.cookie("user_id", user.id)
@@ -173,7 +182,7 @@ app.post('/urls', (req, res) => {
   res.redirect(`/urls/${id}`);
 });
 
-app.post('/urls/:id/update', (req, res) => {
+app.post('/urls/:id', (req, res) => {
   urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect(`/urls`);
 })
@@ -281,6 +290,8 @@ app.post('/register', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
   //error handling, if user and pass are zero return error
   if (email.length === 0 && password.length === 0) {
     return res.status(400).send(`400 error - Missing E-mail or Password`);
@@ -293,7 +304,12 @@ app.post('/register', (req, res) => {
 //generate random id for the new user
   const id = generateRandomString()
 
-  const user = { email, password, id }
+
+  //hashed passowrd added in to the password property
+  const user = { email, password: hashedPassword, id }
+
+
+
 
   users[id] = user;
   res.cookie("user_id", id)
