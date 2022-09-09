@@ -8,6 +8,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser())
 app.set('view engine', 'ejs');
 
+//outputs the user object
 const getUserFromCookie = (cookie) => {
   for (const user in users) {
     if (user === cookie) {
@@ -16,6 +17,7 @@ const getUserFromCookie = (cookie) => {
   }
   return null;
 }
+
 
 const getUserFromEmail = (email) => {
   for (const user in users) {
@@ -37,10 +39,28 @@ const generateRandomString = function() {
   return result;
 }
 
-//our database for urls to start
+
+
+// //our database for urls to start
+// const urlDatabase = {
+//   'b2xVn2': 'http://www.lighthouselabs.ca',
+//   '9sm5xk': 'http://www.google.com'
+// };
+
+//our updated database
 const urlDatabase = {
-  'b2xVn2': 'http://www.lighthouselabs.ca',
-  '9sm5xk': 'http://www.google.com'
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "b2x3rt",
+  },
 };
 
 const users = {
@@ -63,17 +83,46 @@ app.get('/', (req, res) => {
 });
 
 app.get('/u/:id', (req, res) => {
-  const longURL = urlDatabase[req.params.id];
+  // incorrect id entered, so we send an error e.g. /urlsss/registration returns that doesn't exits
+  console.log(req)
+  const id = req.params.id;
+  const urlID = urlDatabase[id];
+  if (!urlID) {
+    return res.status(400).send("That id doesn't exist!");
+  }
+  const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
 })
 
+//this is a function to grab the specific urls associated with the passed in ID
+const getURLSofUser = (userID) => {
+  const result = {};
+  for (let shortIds in urlDatabase) {
+    if (urlDatabase[shortIds].userID === userID) {
+      result[shortIds] = urlDatabase[shortIds]
+    }
+  }
+return result
+}
+
 //whenever we see app.get and then a render request we are asking html to render the html webpage.
 app.get('/urls', (req, res) => {
-  const templateVars = { urls: urlDatabase, user:getUserFromCookie(req.cookies["user_id"]) }; //to get the username to show up we added the username cookie as a paramter.
-  res.render('urls_index', templateVars);
+  
+  const userID = (req.cookies["user_id"])
+  const user = getUserFromCookie(userID)
+const myURLS = getURLSofUser(userID)
+
+
+const templateVars = { urls: myURLS, user }; //to get the username to show up we added the username cookie as a paramter.
+
+if(!user) {
+  return res.send("You need to login!")
+}
+res.render('urls_index', templateVars);
 });
 
 app.get('/login', (req, res) => {
+
   const templateVars = {user: null}
   res.render("login", templateVars)
 });
@@ -105,19 +154,28 @@ if (user) {
 app.post('/urls', (req, res) => {
   console.log(req.body);
   const longURL = req.body.longURL;
-  if (!longURL) {
 
+  if (!longURL) {
+    
     return res.status(400).send('Enter valid url!'); 
   }
 
+  const user = getUserFromCookie(req.cookies["user_id"])
+  if(!user) {
+    return res.status(400).send('NO! You are not logged in!'); 
+  }
+
   const id = generateRandomString();
-  urlDatabase[id] = longURL;
+  urlDatabase[id] = {
+    longURL,
+    userID: req.cookies["user_id"]
+  }
   console.log(urlDatabase);
   res.redirect(`/urls/${id}`);
 });
 
 app.post('/urls/:id/update', (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL;
+  urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect(`/urls`);
 })
 
@@ -129,7 +187,12 @@ app.post('/urls/:id/delete', (req, res) => {
 });
 
 app.get('/urls/new', (req, res) => {
-  const templateVars = { user:getUserFromCookie(req.cookies["user_id"]) };
+const user = getUserFromCookie(req.cookies["user_id"])
+  if(!user) {
+    res.redirect('/login')
+  }
+
+  const templateVars = { user };
   res.render('urls_new', templateVars);
 });
 
@@ -141,7 +204,7 @@ app.get('/register', (req, res) => {
 
 app.get('/urls/:id', (req, res) => {
   const id = req.params.id;
-  const longURL = urlDatabase[id];
+  const longURL = urlDatabase[id].longURL;
 
   if (!longURL) {
     return res.status(400).send("URL doesn't exist!");
