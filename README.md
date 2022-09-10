@@ -5,10 +5,8 @@ TinyApp is a full stack web application built with Node and Express that allows 
 ## Final Product
 
 !["Screenshot of URLs page"](https://github.com/plettboy/tinyApp/blob/master/docs/urls.png?raw=true)
-URLS Page
 
 !["Screenshot of the Registration Page"](https://github.com/plettboy/tinyApp/blob/master/docs/register_page.png?raw=true)
-Registration Page
 
 !["screenshot URL Addition Page"](https://github.com/plettboy/tinyApp/blob/master/docs/new_url_page.png?raw=true)
 
