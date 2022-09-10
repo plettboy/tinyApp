@@ -11,7 +11,6 @@ URLS Page
 Registration Page
 
 !["screenshot URL Addition Page"](https://github.com/plettboy/tinyApp/blob/master/docs/new_url_page.png?raw=true)
-Adding the URL's
 
 ## Dependencies
 
