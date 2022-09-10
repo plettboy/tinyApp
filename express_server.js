@@ -222,7 +222,6 @@ app.post('/register', (req, res) => {
 
   }
 
-//generate random id for the new user
   const id = generateRandomString()
 
 
