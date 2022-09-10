@@ -160,7 +160,6 @@ const user = getUserFromCookie(req.session["user_id"], users)
   res.render('urls_new', templateVars);
 });
 
-//this is a get request for a new register page, user name is null and we render the file /register
 app.get('/register', (req, res) => {
   const templateVars = { user:getUserFromCookie(null, users) };
   res.render('register', templateVars);
