@@ -217,11 +217,12 @@ app.post('/register', (req, res) => {
     return res.status(400).send(`400 error - Missing E-mail or Password`);
   }
 
-//if emailmatch is true, then error
-  if (emailMatch(email)) {
+// if emailmatch is true, then error
+  if (findUserByEmail(email, users)) {
     return res.status(400).send(`400 error - A new email is required.`);
 
   }
+
 //generate random id for the new user
   const id = generateRandomString()
 
