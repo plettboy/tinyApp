@@ -2,34 +2,39 @@
 <html lang="en">
 
 <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
     integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous" />
-  <title>URL - TinyApp Example</title>
+  <title>TinyApp</title>
 </head>
 
 <body>
   <%- include('partials/_header') %>
-    <div class="card text-center">
-      <div class="card-header"></div>
-      <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %>
-        </h5>
-        <p class="card-text">
-          Short URL ID: <a href="/u/<%= id %>">
-            <%= id %>
-          </a>
-        </p>
-      </div>
-      <div class="card-footer text-muted">
-        <h5 class="card-title">Edit</h5>
-        <form method="POST" action="/urls/<%= id %>">
-          <label for="longURL">Enter a URL:</label>
-          <input type="text" name="longURL" />
-          <input class="btn btn-primary" type="submit" value="Submit">
-        </form>
-      </div>
-    </div>
+
+    <main style="margin: 1em;">
+      <h1>Login</h1>
+      <form method="POST" action="/login">
+        <div class="form-group">
+          <label for="exampleInputEmail1">
+            <h5>Email address</h5>
+          </label>
+          <input type="email" class="form-control" id="exampleInputEmail1" name="email" aria-describedby="emailHelp"
+            placeholder="Enter email">
+          <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+        </div>
+        <div class="form-group">
+          <label for="exampleInputPassword1">
+            <h5>Password</h5>
+          </label>
+          <input type="password" class="form-control" name="password" id="exampleInputPassword1" placeholder="Password">
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button>
+      </form>
+
+    </main>
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
       integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"

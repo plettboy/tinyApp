@@ -15,39 +15,27 @@
   <%- include('partials/_header') %>
 
     <main style="margin: 1em;">
-      <h3>My URLs</h3>
-      <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">Short URL ID</th>
-            <th scope="col">Long URL</th>
-            <th scope="col">Edit</th>
-            <th scope="col">Delete</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% for (let id in urls) { %>
-            <tr>
-              <td>
-                <%= id %>
-              </td>
-              <td>
-                <%= urls[id].longURL %>
-              </td>
-              <td>
-                <form method="GET" action="/urls/<%= id %>">
-                  <button class="btn btn-outline-primary">Edit</button>
-                </form>
-              </td>
-              <td>
-                <form method="POST" action="/urls/<%= id %>/delete">
-                  <button class="btn btn-outline-danger">Delete</button>
-                </form>
-              </td>
-            </tr>
-            <% } %>
-        </tbody>
-      </table>
+
+
+      <h1>Register</h1>
+      <form method="POST" action="/register">
+        <div class="form-group">
+          <label for="exampleInputEmail1">
+            <h5>Email address</h5>
+          </label>
+          <input type="email" class="form-control" id="exampleInputEmail1" name="email" aria-describedby="emailHelp"
+            placeholder="Enter email">
+          <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+        </div>
+        <div class="form-group">
+          <label for="exampleInputPassword1">
+            <h5>Password</h5>
+          </label>
+          <input type="password" class="form-control" name="password" id="exampleInputPassword1" placeholder="Password">
+        </div>
+        <button type="submit" class="btn btn-primary">Register</button>
+      </form>
+
     </main>
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
